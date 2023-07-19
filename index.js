@@ -12,16 +12,14 @@ app.get('', (req, res)=> {
     res.sendFile('index.html');
 });
 
-let count = 0;
+const welcomeText = 'welcome!';
 
 io.on('connection', (socket) => {
-    console.log('new web socket connection');
+   socket.emit('message', welcomeText);
 
-    socket.emit('countUpdated', count);
-
-    socket.on('increment', () => {
-        io.emit('countUpdated', ++count);
-    });
+   socket.on('message', (message) => {
+       io.emit('sendMessage', message);
+   });
 });
 
 server.listen(process.env.PORT | 3000, () => {
