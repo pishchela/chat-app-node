@@ -1,25 +1,40 @@
 const socket = io();
 
+// Elements
 const $messageForm = document.getElementById('message-form');
 const $messageFormInput = $messageForm.querySelector('input');
 const $messageFormButton = $messageForm.querySelector('button');
-
 const $sendLocationButton = document.getElementById('send-location');
+const $messages = document.getElementById('messages');
+
+// Templates
+const messageTemplate = document.querySelector('#message-template').innerHTML;
+const locationTemplate = document.querySelector('#location-message-template').innerHTML;
+
 
 socket.on('message', (message) => {
     console.warn(message);
+    const html = Mustache.render(messageTemplate, {
+        message: message,
+    });
+    $messages.insertAdjacentHTML('beforeend', html);
 });
 
-socket.on('sendMessage', (message) => {
-    console.warn(message);
-});
+socket.on('locationMessage', (url) => {
+    const html = Mustache.render(locationTemplate, {
+        location: 'My current location',
+        locationLink: url,
+    });
+    $messages.insertAdjacentHTML('beforeend', html);
+})
+
 
 $messageForm.addEventListener('submit', (event) => {
     event.preventDefault();
     $messageFormButton.setAttribute('disabled', 'disabled');
     const messageInputValue = event.target.elements.message.value;
 
-    socket.emit('message', messageInputValue, (error) => {
+    socket.emit('sendMessage', messageInputValue, (error) => {
         $messageFormButton.removeAttribute('disabled');
         $messageFormInput.value = '';
         $messageFormInput.focus();

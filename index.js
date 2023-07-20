@@ -23,19 +23,19 @@ io.on('connection', (socket) => {
    socket.emit('message', messages.welcome);
    socket.broadcast.emit('message', messages.newUser);
 
-   socket.on('message', (message, callback) => {
+   socket.on('sendMessage', (message, callback) => {
        const filter = new Filter();
 
        if (filter.isProfane(message)) {
            return callback('Profanity is not allowed!');
        }
 
-       io.emit('sendMessage', message);
+       io.emit('message', message);
        callback();
    });
 
     socket.on('sendLocation', (location, callback) => {
-        socket.broadcast.emit('message', `https://google.com/maps?q=${location.latitude},${location.longitude}`);
+        io.emit('locationMessage', `https://google.com/maps?q=${location.latitude},${location.longitude}`);
         callback();
     });
 
