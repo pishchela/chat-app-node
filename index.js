@@ -37,6 +37,10 @@ io.on('connection', (socket) => {
 
        socket.emit('message', generateMessage(messages.welcome, ADMIN_NAME));
        socket.broadcast.to(user.room).emit('message', generateMessage(`${user.username} ${messages.welcome}`, user.username));
+       io.to(user.room).emit('roomData', {
+           users: getUsersInRoom(user.room),
+           room: user.room,
+       });
 
        callback();
    });
@@ -65,6 +69,10 @@ io.on('connection', (socket) => {
 
        if (user) {
            io.to(user.room).emit('message', generateMessage(`${user.username}${messages.disconnected}`, ADMIN_NAME));
+           io.to(user.room).emit('roomData', {
+               users: getUsersInRoom(user.room),
+               room: user.room,
+           });
        }
    });
 });
