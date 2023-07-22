@@ -9,6 +9,8 @@ const io = socketio(server);
 
 const { generateMessage, generateLocationMessage } = require('./src/utils/messages');
 
+const { addUser, getUsersInRoom, getUser, removeUser } = require('./src/utils/users');
+
 app.use(express.static('public'));
 
 app.get('', (req, res)=> {
@@ -17,32 +19,53 @@ app.get('', (req, res)=> {
 
 const messages = {
   welcome: 'welcome!',
-  newUser: 'A new user has joined!',
-  disconnected: 'User has left'
+  newUser: 'has joined!',
+  disconnected: ' has left'
 };
 
+const ADMIN_NAME = 'Admin';
+
 io.on('connection', (socket) => {
-   socket.emit('message', generateMessage(messages.welcome));
-   socket.broadcast.emit('message', generateMessage(messages.newUser));
+
+   socket.on('join', (options, callback) => {
+       console.warn(options);
+       const { error, user } = addUser({ id: socket.id, ...options });
+       if (error) {
+           return callback(error);
+       }
+       socket.join(user.room);
+
+       socket.emit('message', generateMessage(messages.welcome, ADMIN_NAME));
+       socket.broadcast.to(user.room).emit('message', generateMessage(`${user.username} ${messages.welcome}`, user.username));
+
+       callback();
+   });
 
    socket.on('sendMessage', (message, callback) => {
        const filter = new Filter();
+
+       const user = getUser(socket.id);
 
        if (filter.isProfane(message)) {
            return callback('Profanity is not allowed!');
        }
 
-       io.emit('message', generateMessage(message));
+       io.to(user.room).emit('message', generateMessage(message, user.username));
        callback();
    });
 
     socket.on('sendLocation', (location, callback) => {
-        io.emit('locationMessage', generateLocationMessage(location));
+        const user = getUser(socket.id);
+        io.to(user.room).emit('locationMessage', generateLocationMessage(location, user.username));
         callback();
     });
 
    socket.on('disconnect', () => {
-      io.emit('message', generateMessage(messages.disconnected))
+       const user = removeUser(socket.id);
+
+       if (user) {
+           io.to(user.room).emit('message', generateMessage(`${user.username}${messages.disconnected}`, ADMIN_NAME));
+       }
    });
 });
 
