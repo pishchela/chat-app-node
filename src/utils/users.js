@@ -45,9 +45,22 @@ const getUsersInRoom = (room) => {
     return users.filter((user) => user.room === room);
 };
 
+const getRooms = () => {
+    const roomsSet = new Set();
+    users.forEach((user) => {
+        roomsSet.add(user.room);
+    });
+    return Array.from(roomsSet).map((room) => {
+        return {
+            room: room,
+        };
+    });
+};
+
 module.exports = {
     addUser,
     removeUser,
     getUser,
     getUsersInRoom,
+    getRooms,
 }

@@ -9,7 +9,13 @@ const io = socketio(server);
 
 const { generateMessage, generateLocationMessage } = require('./src/utils/messages');
 
-const { addUser, getUsersInRoom, getUser, removeUser } = require('./src/utils/users');
+const {
+    addUser,
+    getUsersInRoom,
+    getUser,
+    removeUser,
+    getRooms,
+} = require('./src/utils/users');
 
 app.use(express.static('public'));
 
@@ -27,6 +33,10 @@ const ADMIN_NAME = 'Admin';
 
 io.on('connection', (socket) => {
 
+   socket.on('getRooms', (_, callback) => {
+       callback(getRooms());
+   });
+
    socket.on('join', (options, callback) => {
        console.warn(options);
        const { error, user } = addUser({ id: socket.id, ...options });
@@ -41,9 +51,11 @@ io.on('connection', (socket) => {
            users: getUsersInRoom(user.room),
            room: user.room,
        });
+       io.emit('getRooms', getRooms());
 
        callback();
    });
+
 
    socket.on('sendMessage', (message, callback) => {
        const filter = new Filter();
@@ -73,6 +85,7 @@ io.on('connection', (socket) => {
                users: getUsersInRoom(user.room),
                room: user.room,
            });
+           io.emit('getRooms', getRooms());
        }
    });
 });
